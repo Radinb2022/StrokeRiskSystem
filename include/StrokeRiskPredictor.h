@@ -1,18 +1,22 @@
-#ifndef STROKE_RISK_PREDICTOR_H
-#define STROKE_RISK_PREDICTOR_H
+#ifndef STROKERISKPREDICTOR_H
+#define STROKERISKPREDICTOR_H
 
 #include "UserProfile.h"
+#include "RFClassifier.h"
 #include "KaggleData.h"
-#include "RandomForest.h"
 #include <string>
 
 class StrokeRiskPredictor {
+private:
+    RFClassifier forest;
+
 public:
-    RandomForest forest;
-    void train(const std::vector<UserProfile>& data);
-    int predict(const UserProfile& user) const;
-    float predict_proba(const UserProfile& user) const;
-    // Old rule-based (fallback)
+    void TrainModel(const std::vector<UserProfile>& data);
+    int PredictRisk(const UserProfile& user) const;
+    double RiskProbability(const UserProfile& user) const;
+    std::string OutcomeMessage(const UserProfile& user) const;
+    
+    // Rule-based fallback methods
     float calculateRisk(UserProfile& user);
     std::string generateAlert(float risk);
     void addTrainingData(UserProfile& user, KaggleData& data);

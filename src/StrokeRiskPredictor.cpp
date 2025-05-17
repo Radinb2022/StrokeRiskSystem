@@ -1,16 +1,25 @@
-#include "StrokeRiskPredictor.h"
+#include "../include/StrokeRiskPredictor.h"
 #include <algorithm>
 
-void StrokeRiskPredictor::train(const std::vector<UserProfile>& data) {
-    forest.train(data);
+void StrokeRiskPredictor::TrainModel(const std::vector<UserProfile>& data) {
+    forest.Train(data);
 }
 
-int StrokeRiskPredictor::predict(const UserProfile& user) const {
-    return forest.predict(user);
+int StrokeRiskPredictor::PredictRisk(const UserProfile& user) const {
+    return forest.Predict(user);
 }
 
-float StrokeRiskPredictor::predict_proba(const UserProfile& user) const {
-    return forest.predict_proba(user);
+double StrokeRiskPredictor::RiskProbability(const UserProfile& user) const {
+    return forest.PredictProba(user);
+}
+
+std::string StrokeRiskPredictor::OutcomeMessage(const UserProfile& user) const {
+    double p = RiskProbability(user);
+    int cls = PredictRisk(user);
+    char buffer[128];
+    snprintf(buffer, sizeof(buffer), "Prediction: %s (%.2f%% probability)",
+             cls ? "At Risk" : "Not At Risk", p * 100.0);
+    return std::string(buffer);
 }
 
 float StrokeRiskPredictor::calculateRisk(UserProfile& user) {
@@ -28,5 +37,5 @@ std::string StrokeRiskPredictor::generateAlert(float risk) {
 
 void StrokeRiskPredictor::addTrainingData(UserProfile& user, KaggleData& data) {
     data.appendUser(user);
-    train(data.dataset);
+    TrainModel(data.dataset);
 }
