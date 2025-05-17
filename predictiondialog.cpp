@@ -1,86 +1,210 @@
-#include "predictiondialog.h"
-#include "ui_predictiondialog.h"
-#include <QMessageBox>
-#include <QDebug>
-#include "src/UserProfile.h" // Ensure UserProfile definition is available
-#include "src/QuestionnaireResponses.h" // For capturing questionnaire data
+#include "PredictionDialog.h"
+#include <FL/fl_ask.H> // For fl_alert
+#include <iostream>
+#include <string>
+#include <sstream> // For string conversion
 
-PredictionDialog::PredictionDialog(StrokeRiskPredictor& predictor, QWidget *parent)
-    : QDialog(parent),
-      ui(new Ui::PredictionDialog),
-      m_riskPredictor(predictor) // Initialize the reference
+PredictionDialog::PredictionDialog(StrokeRiskPredictor& predictor, DataProcessor& dataProcessor)
+    : Fl_Window(700, 650, "Stroke Risk Prediction Questionnaire"),
+      m_riskPredictor(predictor),
+      m_dataProcessor(dataProcessor),
+      m_predictionSuccess(false)
 {
-    ui->setupUi(this);
-    setWindowTitle("Stroke Risk Prediction Questionnaire");
-    setFixedSize(700, 650); // Fixed size
+    size_range(700, 650, 700, 650); // Fixed size
 
-    connect(ui->predictButton, &QPushButton::clicked, this, &PredictionDialog::on_predictButton_clicked);
+    begin(); // Start adding widgets
 
-    ui->resultLabel->setText("Prediction:"); // Clear previous results
+    titleLabel = new Fl_Box(MARGIN, MARGIN, w() - 2 * MARGIN, 30, "Please fill in your health indicators:");
+    titleLabel->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
+    titleLabel->labelsize(16);
+    titleLabel->labelfont(FL_BOLD);
+
+    // Setup input widgets
+    setupFormLayout();
+
+    // Predict Button
+    predictButton = new Fl_Button((w() - INPUT_WIDTH) / 2, h() - MARGIN - 40 - SPACING - 30, INPUT_WIDTH, 40, "Predict Stroke Risk");
+    predictButton->callback(predict_callback, this);
+
+    // Result Label
+    resultLabel = new Fl_Box(MARGIN, h() - MARGIN - 30, w() - 2 * MARGIN, 30, "Prediction:");
+    resultLabel->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
+    resultLabel->labelsize(14);
+    resultLabel->labelfont(FL_BOLD);
+
+    end(); // Stop adding widgets
+
+    // Set default values for numerical inputs
+    ageInput->value("30");
+    avgGlucoseInput->value("90.0");
+    bmiInput->value("25.0");
 }
 
 PredictionDialog::~PredictionDialog() {
-    delete ui;
+    // FLTK widgets are usually managed by their parent Fl_Group/Fl_Window.
 }
+
+void PredictionDialog::setupFormLayout() {
+    int current_y = titleLabel->y() + titleLabel->h() + SPACING;
+    int col1_x = MARGIN;
+    int col2_x = col1_x + LABEL_WIDTH + SPACING;
+
+    // Use a group to contain the form widgets for scrollability if needed (basic version now)
+    inputGroup = new Fl_Group(MARGIN, current_y, w() - 2 * MARGIN, h() - current_y - MARGIN - 40 - SPACING - 30); // Leave space for predict button and result
+    inputGroup->begin();
+
+    // Gender
+    new Fl_Box(col1_x, current_y, LABEL_WIDTH, ROW_HEIGHT, "Gender:");
+    genderChoice = new Fl_Choice(col2_x, current_y, INPUT_WIDTH, ROW_HEIGHT);
+    genderChoice->add("Male");
+    genderChoice->add("Female");
+    genderChoice->add("Other");
+    genderChoice->value(0); // Default to Male
+    current_y += ROW_HEIGHT + SPACING;
+
+    // Age
+    new Fl_Box(col1_x, current_y, LABEL_WIDTH, ROW_HEIGHT, "Age:");
+    ageInput = new Fl_Int_Input(col2_x, current_y, INPUT_WIDTH, ROW_HEIGHT);
+    ageInput->value("30");
+    current_y += ROW_HEIGHT + SPACING;
+
+    // Hypertension
+    new Fl_Box(col1_x, current_y, LABEL_WIDTH, ROW_HEIGHT, "Hypertension (High Blood Pressure):");
+    hypertensionChoice = new Fl_Choice(col2_x, current_y, INPUT_WIDTH, ROW_HEIGHT);
+    hypertensionChoice->add("No");
+    hypertensionChoice->add("Yes");
+    hypertensionChoice->value(0);
+    current_y += ROW_HEIGHT + SPACING;
+
+    // Heart Disease
+    new Fl_Box(col1_x, current_y, LABEL_WIDTH, ROW_HEIGHT, "Heart Disease:");
+    heartDiseaseChoice = new Fl_Choice(col2_x, current_y, INPUT_WIDTH, ROW_HEIGHT);
+    heartDiseaseChoice->add("No");
+    heartDiseaseChoice->add("Yes");
+    heartDiseaseChoice->value(0);
+    current_y += ROW_HEIGHT + SPACING;
+
+    // Ever Married
+    new Fl_Box(col1_x, current_y, LABEL_WIDTH, ROW_HEIGHT, "Ever Married:");
+    everMarriedChoice = new Fl_Choice(col2_x, current_y, INPUT_WIDTH, ROW_HEIGHT);
+    everMarriedChoice->add("No");
+    everMarriedChoice->add("Yes");
+    everMarriedChoice->value(0);
+    current_y += ROW_HEIGHT + SPACING;
+
+    // Work Type
+    new Fl_Box(col1_x, current_y, LABEL_WIDTH, ROW_HEIGHT, "Work Type:");
+    workTypeChoice = new Fl_Choice(col2_x, current_y, INPUT_WIDTH, ROW_HEIGHT);
+    workTypeChoice->add("Private");
+    workTypeChoice->add("Self-employed");
+    workTypeChoice->add("Govt_job");
+    workTypeChoice->add("children");
+    workTypeChoice->add("Never_worked");
+    workTypeChoice->value(0);
+    current_y += ROW_HEIGHT + SPACING;
+
+    // Residence Type
+    new Fl_Box(col1_x, current_y, LABEL_WIDTH, ROW_HEIGHT, "Residence Type:");
+    residenceTypeChoice = new Fl_Choice(col2_x, current_y, INPUT_WIDTH, ROW_HEIGHT);
+    residenceTypeChoice->add("Urban");
+    residenceTypeChoice->add("Rural");
+    residenceTypeChoice->value(0);
+    current_y += ROW_HEIGHT + SPACING;
+
+    // Avg Glucose Level
+    new Fl_Box(col1_x, current_y, LABEL_WIDTH, ROW_HEIGHT, "Avg Glucose Level:");
+    avgGlucoseInput = new Fl_Float_Input(col2_x, current_y, INPUT_WIDTH, ROW_HEIGHT);
+    avgGlucoseInput->value("90.0");
+    current_y += ROW_HEIGHT + SPACING;
+
+    // BMI
+    new Fl_Box(col1_x, current_y, LABEL_WIDTH, ROW_HEIGHT, "BMI:");
+    bmiInput = new Fl_Float_Input(col2_x, current_y, INPUT_WIDTH, ROW_HEIGHT);
+    bmiInput->value("25.0");
+    current_y += ROW_HEIGHT + SPACING;
+
+    // Smoking Status
+    new Fl_Box(col1_x, current_y, LABEL_WIDTH, ROW_HEIGHT, "Smoking Status:");
+    smokingStatusChoice = new Fl_Choice(col2_x, current_y, INPUT_WIDTH, ROW_HEIGHT);
+    smokingStatusChoice->add("formerly smoked");
+    smokingStatusChoice->add("never smoked");
+    smokingStatusChoice->add("smokes");
+    smokingStatusChoice->add("Unknown"); // Corresponds to the Kaggle dataset
+    smokingStatusChoice->value(0);
+    current_y += ROW_HEIGHT + SPACING;
+
+    inputGroup->end();
+    // If the content is taller than the group, you'd make the window scrollable,
+    // or manually add a scrollbar. For now, assuming fixed window size fits content.
+}
+
 
 UserProfile PredictionDialog::getUserProfileFromInputs() const {
     UserProfile userProfile;
 
-    // Assuming UserProfile has setters for these attributes
-    // And that your backend uses string or integer representations consistent with these inputs
+    userProfile.setGender(genderChoice->text());
+    userProfile.setAge(atoi(ageInput->value())); // Convert char* to int
+    userProfile.setHypertension(strcmp(hypertensionChoice->text(), "Yes") == 0);
+    userProfile.setHeartDisease(strcmp(heartDiseaseChoice->text(), "Yes") == 0);
+    userProfile.setEverMarried(strcmp(everMarriedChoice->text(), "Yes") == 0);
+    userProfile.setWorkType(workTypeChoice->text());
+    userProfile.setResidenceType(residenceTypeChoice->text());
 
-    userProfile.setGender(ui->genderComboBox->currentText().toStdString()); // "Male", "Female", "Other"
-    userProfile.setAge(ui->ageSpinBox->value());
-    userProfile.setHypertension(ui->hypertensionComboBox->currentText() == "Yes"); // 0 or 1
-    userProfile.setHeartDisease(ui->heartDiseaseComboBox->currentText() == "Yes"); // 0 or 1
-    userProfile.setEverMarried(ui->everMarriedComboBox->currentText() == "Yes"); // "Yes" or "No"
-    userProfile.setWorkType(ui->workTypeComboBox->currentText().toStdString());
-    userProfile.setResidenceType(ui->residenceTypeComboBox->currentText().toStdString());
+    userProfile.setAvgGlucoseLevel(atof(avgGlucoseInput->value())); // Convert char* to double
+    userProfile.setBmi(atof(bmiInput->value()));
 
-    bool ok;
-    double avgGlucose = ui->avgGlucoseLineEdit->text().toDouble(&ok);
-    if (ok) userProfile.setAvgGlucoseLevel(avgGlucose);
-    else QMessageBox::warning(this, "Input Error", "Please enter a valid number for Average Glucose Level.");
-
-    double bmi = ui->bmiLineEdit->text().toDouble(&ok);
-    if (ok) userProfile.setBmi(bmi);
-    else QMessageBox::warning(this, "Input Error", "Please enter a valid number for BMI.");
-
-    userProfile.setSmokingStatus(ui->smokingStatusComboBox->currentText().toStdString());
-
-    // You might need to map these to numerical values if your backend ML model expects them
-    // Example: gender ("Male": 1, "Female": 0), ever_married ("Yes": 1, "No": 0)
-    // Your UserProfile class or a data preprocessor in your backend should handle this.
+    userProfile.setSmokingStatus(smokingStatusChoice->text());
 
     return userProfile;
 }
 
-void PredictionDialog::on_predictButton_clicked() {
-    UserProfile userProfile = getUserProfileFromInputs();
+UserProfile PredictionDialog::getPredictedUserProfile() const {
+    return m_currentUserProfile;
+}
 
-    // Check if input conversion was successful enough
-    if (ui->avgGlucoseLineEdit->text().isEmpty() || ui->bmiLineEdit->text().isEmpty() ||
-        ui->avgGlucoseLineEdit->text().toDouble() <= 0 || ui->bmiLineEdit->text().toDouble() <= 0) {
-        QMessageBox::warning(this, "Input Error", "Please enter valid numerical values for Average Glucose Level and BMI.");
+void PredictionDialog::predict_callback(Fl_Widget* w, void* data) {
+    PredictionDialog* self = static_cast<PredictionDialog*>(data);
+    UserProfile userProfile = self->getUserProfileFromInputs();
+
+    // Basic input validation
+    bool isValid = true;
+    if (strlen(self->avgGlucoseInput->value()) == 0 || atof(self->avgGlucoseInput->value()) <= 0) {
+        fl_alert("Please enter a valid positive number for Average Glucose Level.");
+        isValid = false;
+    }
+    if (strlen(self->bmiInput->value()) == 0 || atof(self->bmiInput->value()) <= 0) {
+        fl_alert("Please enter a valid positive number for BMI.");
+        isValid = false;
+    }
+    if (!isValid) {
         return;
     }
 
-    // Call the backend prediction logic
-    // This assumes StrokeRiskPredictor takes a UserProfile and returns a string prediction.
     try {
-        std::string prediction = m_riskPredictor.predict(userProfile); // Assuming predict takes UserProfile
+        std::string prediction_str = self->m_riskPredictor.predict(userProfile, self->m_dataProcessor);
 
-        QString resultText = "Prediction: <span style='font-weight:bold; color:";
-        if (prediction == "At Risk") {
-            resultText += "red;'>At Risk</span>";
-        } else if (prediction == "Not At Risk") {
-            resultText += "green;'>Not At Risk</span>";
+        std::string display_text;
+        if (prediction_str == "1") { // Assuming "1" means At Risk from your model
+            display_text = "Prediction: At Risk";
+            self->m_currentUserProfile.setStrokePrediction(1);
+        } else if (prediction_str == "0") { // Assuming "0" means Not At Risk
+            display_text = "Prediction: Not At Risk";
+            self->m_currentUserProfile.setStrokePrediction(0);
         } else {
-            resultText += "black;'>" + QString::fromStdString(prediction) + "</span>";
+            display_text = "Prediction: " + prediction_str; // Raw output if not 0/1
+            self->m_currentUserProfile.setStrokePrediction(-1); // Unknown/Error
         }
-        ui->resultLabel->setText(resultText);
+        self->resultLabel->label(display_text.c_str());
+
+        // Store the current user profile including its prediction for later use (e.g., comparison)
+        self->m_currentUserProfile = userProfile;
+        self->m_currentUserProfile.setStrokePrediction(prediction_str == "1" ? 1 : 0);
+        self->m_predictionSuccess = true;
+
     } catch (const std::exception& e) {
-        QMessageBox::critical(this, "Prediction Error", QString("An error occurred during prediction: ") + e.what());
-        ui->resultLabel->setText("Prediction: Error");
+        fl_alert("Prediction Error:\n%s", e.what());
+        self->resultLabel->label("Prediction: Error");
+        self->m_predictionSuccess = false;
     }
+    Fl::check(); // Update UI to show result
 }
