@@ -1,37 +1,60 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
+#include <FL/Fl.H>
+#include <FL/Fl_Window.H>
+#include <FL/Fl_Button.H>
+#include <FL/Fl_Box.H>
+#include <FL/Fl_Input.H> // For general text display/input
+#include <string>
+#include <memory> // For std::unique_ptr
 
-// Forward declarations or includes for backend classes if needed
+// Include your backend classes
+#include "src/DataProcessor.h"
 #include "src/RandomForest.h"
 #include "src/StrokeRiskPredictor.h"
+#include "src/ComparisonEngine.h"
 #include "src/UserProfile.h"
-#include "src/KaggleData.h"
 
-QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
-QT_END_NAMESPACE
+// Forward declarations for dialogs to avoid circular includes
+// (although FLTK often makes this less of an issue than Qt for simple dialogs)
+class PredictionDialog;
+class TrainingDialog;
+class ComparisonBoardDialog;
 
-class MainWindow : public QMainWindow {
-    Q_OBJECT
-
+class MainWindow : public Fl_Window {
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    // Constants for layout
+    static constexpr int BUTTON_HEIGHT = 40;
+    static constexpr int BUTTON_WIDTH = 300;
+    static constexpr int SPACING = 10;
+    static constexpr int MARGIN = 20;
+
+    MainWindow();
     ~MainWindow();
 
-private slots:
-    void on_predictRiskButton_clicked();
-    void on_trainModelButton_clicked();
-    void on_compareDashboardButton_clicked();
-
 private:
-    Ui::MainWindow *ui; // This will hold the UI elements from mainwindow.ui
+    Fl_Box* welcomeLabel;
+    Fl_Button* predictRiskButton;
+    Fl_Button* trainModelButton;
+    Fl_Button* compareDashboardButton;
 
-    RandomForest *m_randomForestModel;
-     StrokeRiskPredictor *m_riskPredictor;
-    UserProfile *m_userProfile;
-    KaggleData *m_kaggleData;
+    // Backend class instances
+    DataProcessor m_dataProcessor;
+    RandomForest m_randomForestModel;
+    StrokeRiskPredictor m_riskPredictor;
+    ComparisonEngine m_comparisonEngine;
+
+    UserProfile m_lastPredictedUserProfile; // Store the user profile from the last prediction
+
+    // Callbacks for buttons
+    static void predict_callback(Fl_Widget* w, void* data);
+    static void train_callback(Fl_Widget* w, void* data);
+    static void compare_callback(Fl_Widget* w, void* data);
+
+    // Initializer method
+    void initializeModelAndData();
+    void showMessage(const std::string& title, const std::string& message, bool isError = false);
 };
 
 #endif // MAINWINDOW_H
