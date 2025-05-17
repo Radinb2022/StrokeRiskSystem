@@ -1,11 +1,16 @@
-#include <QApplication>
-#include "mainwindow.h"
+#include <FL/Fl.H> // FLTK core
+#include "MainWindow.h" // Our main window class
 
-int main(int argc, char *argv[]) {
-    QApplication a(argc, argv);
+int main(int argc, char **argv) {
+    // Initialize FLTK, process command line arguments
+    Fl::args(argc, argv);
 
-    MainWindow w;
-    w.show();
+    // Create the main application window
+    MainWindow mainWindow;
 
-    return a.exec();
+    // Show the window
+    mainWindow.show();
+
+    // Start the FLTK event loop
+    return Fl::run();
 }
