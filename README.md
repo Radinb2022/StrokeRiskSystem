@@ -59,9 +59,11 @@ This is a C++ commercial-quality software system for predicting stroke risk usin
 - Standard C++17 or later
 - No external libraries required
 
-## Cleaning the Build
+## Running the Build
 ```sh
 make clean
+make
+./StrokePredictionSystem
 ```
 
 ## Contributing
