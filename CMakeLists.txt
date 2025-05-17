@@ -24,11 +24,11 @@ add_executable(${CMAKE_PROJECT_NAME}
 # IMPORTANT: List ALL backend .cpp files from the src directory here!
 # This is a placeholder list; adjust it based on your actual repository content.
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    ${BACKEND_SRC_DIR}/DecisionTree.cpp
+   # ${BACKEND_SRC_DIR}/DecisionTree.cpp
     ${BACKEND_SRC_DIR}/RandomForest.cpp
     ${BACKEND_SRC_DIR}/StrokeRiskPredictor.cpp
     ${BACKEND_SRC_DIR}/UserProfile.cpp
-    ${BACKEND_SRC_DIR}/QuestionnaireResponses.cpp
+   # ${BACKEND_SRC_DIR}/QuestionnaireResponses.cpp
     ${BACKEND_SRC_DIR}/KaggleData.cpp # Assuming you have this
     ${BACKEND_SRC_DIR}/Comparison.cpp # Assuming you have this
     # Add any other core logic .cpp files here
