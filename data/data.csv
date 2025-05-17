@@ -1,5 +1,3 @@
-ID,Age,HighBloodPressure,ChestPain,Dizziness
-P001,69,No,No,No
-P002,72,Yes,Yes,No
-P003,55,No,Yes,Yes
-P004,25,No,No,No
+PatientId,Age,HighBloodPressure,ChestPain,Dizziness,Fatigue & Weakness,Swelling (Edema),Pain in Neck/Jaw/Shoulder/Back,Excessive Sweating,Chest Discomfort (Activity),Snoring/Sleep Apnea,Anxiety/Feeling of Doom
+27,32,Yes,Yes,Yes,Yes,Yes,Yes,Yes,No,Yes,Yes
+17,27,Yes,Yes,Yes,Yes,Yes,Yes,Yes,No,No,No

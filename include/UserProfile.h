@@ -16,4 +16,7 @@ public:
     void addHealthIndicator(const std::string& indicator, bool value);
 };
 
+// Supported healthIndicators keys:
+// "HighBloodPressure", "ChestPain", "Dizziness", "Fatigue & Weakness", "Swelling (Edema)", "Pain in Neck/Jaw/Shoulder/Back", "Excessive Sweating", "Chest Discomfort (Activity)", "Snoring/Sleep Apnea", "Anxiety/Feeling of Doom"
+
 #endif

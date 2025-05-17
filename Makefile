@@ -3,6 +3,7 @@ CXXFLAGS = -Iinclude -std=c++17 -Wall
 SRC = $(wildcard src/*.cpp)
 OBJ = $(SRC:.cpp=.o)
 TARGET = StrokeRiskSystem
+CXXFLAGS = -std=gnu++14 -Iinclude -g
 
 all: $(TARGET)
 
