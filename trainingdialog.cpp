@@ -1,77 +1,104 @@
-#include "trainingdialog.h"
-#include "ui_trainingdialog.h"
-#include <QFileDialog>
-#include <QMessageBox>
-#include <QDebug>
+#include "TrainingDialog.h"
+#include <FL/Fl_File_Chooser.H> // For native file dialog
+#include <FL/fl_ask.H> // For fl_alert
+#include <iostream>
+#include <string>
 
-TrainingDialog::TrainingDialog(KaggleData& data, RandomForest& model, QWidget *parent)
-    : QDialog(parent),
-      ui(new Ui::TrainingDialog),
-      m_kaggleData(data),
+TrainingDialog::TrainingDialog(DataProcessor& dataProcessor, RandomForest& model)
+    : Fl_Window(500, 300, "Train Model with New Data"),
+      m_dataProcessor(dataProcessor),
       m_randomForestModel(model)
 {
-    ui->setupUi(this);
-    setWindowTitle("Train Model with New Data");
-    setFixedSize(500, 300);
+    size_range(500, 300, 500, 300); // Fixed size
 
-    connect(ui->browseButton, &QPushButton::clicked, this, &TrainingDialog::on_browseButton_clicked);
-    connect(ui->trainButton, &QPushButton::clicked, this, &TrainingDialog::on_trainButton_clicked);
+    begin(); // Start adding widgets
 
-    ui->progressBar->setValue(0);
-    ui->statusLabel->setText("Status: Ready");
-    ui->trainButton->setEnabled(false); // Disable until a file is selected
+    titleLabel = new Fl_Box(20, 20, w() - 40, 30, "Upload and Train Model with Custom Dataset");
+    titleLabel->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
+    titleLabel->labelsize(16);
+    titleLabel->labelfont(FL_BOLD);
+
+    filePathInput = new Fl_Input(20, 70, w() - 120, 30, "File Path:");
+    filePathInput->readonly(1); // Read-only
+    filePathInput->value("No file selected");
+
+    browseButton = new Fl_Button(w() - 90, 70, 70, 30, "Browse...");
+    browseButton->callback(browse_callback, this);
+
+    trainButton = new Fl_Button((w() - 150) / 2, 120, 150, 40, "Start Training");
+    trainButton->callback(train_callback, this);
+    trainButton->deactivate(); // Initially disabled
+
+    progressBar = new Fl_Progress(20, 180, w() - 40, 25);
+    progressBar->value(0);
+
+    statusLabel = new Fl_Box(20, 220, w() - 40, 25, "Status: Ready");
+    statusLabel->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
+
+    end(); // Stop adding widgets
 }
 
 TrainingDialog::~TrainingDialog() {
-    delete ui;
+    // FLTK widgets are usually managed by their parent Fl_Group/Fl_Window.
 }
 
-void TrainingDialog::on_browseButton_clicked() {
-    m_selectedFilePath = QFileDialog::getOpenFileName(this, "Upload New Dataset", "", "CSV Files (*.csv)");
-    if (!m_selectedFilePath.isEmpty()) {
-        ui->filePathLineEdit->setText(m_selectedFilePath);
-        ui->trainButton->setEnabled(true);
-        ui->statusLabel->setText("Status: File selected. Ready to train.");
+void TrainingDialog::browse_callback(Fl_Widget* w, void* data) {
+    TrainingDialog* self = static_cast<TrainingDialog*>(data);
+
+    // Using Fl_Native_File_Chooser for a more modern file dialog
+    Fl_Native_File_Chooser fileChooser;
+    fileChooser.title("Upload New Dataset");
+    fileChooser.filter("CSV Files (*.csv)");
+    fileChooser.type(Fl_Native_File_Chooser::BROWSE_FILE);
+
+    if (fileChooser.show() == 0) { // 0 means OK (file selected)
+        self->m_selectedFilePath = fileChooser.filename();
+        self->filePathInput->value(self->m_selectedFilePath.c_str());
+        self->trainButton->activate();
+        self->statusLabel->label("Status: File selected. Ready to train.");
     } else {
-        ui->filePathLineEdit->clear();
-        ui->trainButton->setEnabled(false);
-        ui->statusLabel->setText("Status: No file selected.");
+        self->m_selectedFilePath = "";
+        self->filePathInput->value("No file selected");
+        self->trainButton->deactivate();
+        self->statusLabel->label("Status: No file selected.");
     }
+    Fl::check(); // Update UI
 }
 
-void TrainingDialog::on_trainButton_clicked() {
-    if (m_selectedFilePath.isEmpty()) {
-        QMessageBox::warning(this, "No File", "Please select a CSV file to train the model.");
+void TrainingDialog::train_callback(Fl_Widget* w, void* data) {
+    TrainingDialog* self = static_cast<TrainingDialog*>(data);
+
+    if (self->m_selectedFilePath.empty()) {
+        fl_alert("Please select a CSV file to train the model.");
         return;
     }
 
-    ui->statusLabel->setText("Status: Loading new data...");
-    ui->progressBar->setValue(10);
-    qApp->processEvents(); // Process UI events to update status
+    self->statusLabel->label("Status: Loading new data...");
+    self->progressBar->value(10);
+    Fl::check(); // Update UI
 
-    // Attempt to load the new data
-    KaggleData newDataHandler; // Use a temporary handler to load new data
-    if (!newDataHandler.loadData(m_selectedFilePath.toStdString())) {
-        QMessageBox::critical(this, "Load Error", "Failed to load the selected CSV file. Please check its format.");
-        ui->statusLabel->setText("Status: Training failed (Data Load Error)");
-        ui->progressBar->setValue(0);
+    DataProcessor newFileProcessor; // Temporary DataProcessor for the new file
+    if (!newFileProcessor.loadCSV(self->m_selectedFilePath)) {
+        fl_alert("Load Error", "Failed to load the selected CSV file. Please check its format and attributes.");
+        self->statusLabel->label("Status: Training failed (Data Load Error)");
+        self->progressBar->value(0);
+        Fl::check();
         return;
     }
 
-    ui->statusLabel->setText("Status: Training model...");
-    ui->progressBar->setValue(50);
-    qApp->processEvents();
+    self->statusLabel->label("Status: Training model...");
+    self->progressBar->value(50);
+    Fl::check();
 
     try {
-       m_randomForestModel.fit(newDataHandler.getFeatures(), newDataHandler.getLabels());
-        m_randomForestModel.trainModelWithNewData(newDataHandler); // Assuming such a method exists
-
-        ui->statusLabel->setText("Status: Training complete!");
-        ui->progressBar->setValue(100);
-        QMessageBox::information(this, "Training Success", "Model successfully trained with the new dataset.");
+        self->m_randomForestModel.fit(newFileProcessor.getProcessedFeatures(), newFileProcessor.getLabels());
+        self->statusLabel->label("Status: Training complete!");
+        self->progressBar->value(100);
+        fl_message("Training Success", "Model successfully trained with the new dataset.");
     } catch (const std::exception& e) {
-        QMessageBox::critical(this, "Training Error", QString("An error occurred during training: ") + e.what());
-        ui->statusLabel->setText("Status: Training failed.");
-        ui->progressBar->setValue(0);
+        fl_alert("Training Error", "An error occurred during training:\n%s", e.what());
+        self->statusLabel->label("Status: Training failed.");
+        self->progressBar->value(0);
     }
+    Fl::check();
 }
