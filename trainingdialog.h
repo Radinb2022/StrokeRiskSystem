@@ -1,30 +1,37 @@
 #ifndef TRAININGDIALOG_H
 #define TRAININGDIALOG_H
 
-#include <QDialog>
-#include "src/KaggleData.h" // For loading new data
-#include "src/RandomForest.h" // For model training
+#include <FL/Fl.H>
+#include <FL/Fl_Window.H>
+#include <FL/Fl_Button.H>
+#include <FL/Fl_Input.H>
+#include <FL/Fl_Box.H>
+#include <FL/Fl_Progress.H> // For progress bar
+#include <string>
 
-QT_BEGIN_NAMESPACE
-namespace Ui { class TrainingDialog; }
-QT_END_NAMESPACE
+#include "src/DataProcessor.h"
+#include "src/RandomForest.h"
 
-class TrainingDialog : public QDialog {
-    Q_OBJECT
-
+class TrainingDialog : public Fl_Window {
 public:
-    explicit TrainingDialog(KaggleData& data, RandomForest& model, QWidget *parent = nullptr);
+    TrainingDialog(DataProcessor& dataProcessor, RandomForest& model);
     ~TrainingDialog();
 
-private slots:
-    void on_browseButton_clicked();
-    void on_trainButton_clicked();
-
 private:
-    Ui::TrainingDialog *ui;
-    KaggleData& m_kaggleData; // Reference to the main window's data handler
-    RandomForest& m_randomForestModel; // Reference to the main window's model
-    QString m_selectedFilePath;
+    Fl_Box* titleLabel;
+    Fl_Input* filePathInput;
+    Fl_Button* browseButton;
+    Fl_Button* trainButton;
+    Fl_Progress* progressBar;
+    Fl_Box* statusLabel;
+
+    DataProcessor& m_dataProcessor;
+    RandomForest& m_randomForestModel;
+    std::string m_selectedFilePath;
+
+    // Callbacks
+    static void browse_callback(Fl_Widget* w, void* data);
+    static void train_callback(Fl_Widget* w, void* data);
 };
 
 #endif // TRAININGDIALOG_H
