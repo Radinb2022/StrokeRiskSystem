@@ -27,6 +27,7 @@ A Java-based system that predicts stroke risk using Random Forest algorithm. The
 ## Running the Application
 
 ### Windows
+Navigate to Directory on Terminal
 Double-click `run.bat` or run in PowerShell:
 ```powershell
 .\run.bat
