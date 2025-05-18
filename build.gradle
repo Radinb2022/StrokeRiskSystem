@@ -1,0 +1,47 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+    implementation 'org.slf4j:slf4j-api:1.7.32'
+    implementation 'ch.qos.logback:logback-classic:1.2.6'
+}
+
+sourceCompatibility = '11'
+targetCompatibility = '11'
+
+mainClassName = 'src.Main'
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java']
+        }
+        resources {
+            srcDirs = ['src/main/resources']
+        }
+    }
+    test {
+        java {
+            srcDirs = ['src/test/java']
+        }
+        resources {
+            srcDirs = ['src/test/resources']
+        }
+    }
+}
+
+test {
+    useJUnit()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+run {
+    standardInput = System.in
+} 

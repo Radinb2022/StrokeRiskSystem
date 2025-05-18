@@ -1,3 +1,8 @@
 PatientId,Age,HighBloodPressure,ChestPain,Dizziness,Fatigue & Weakness,Swelling (Edema),Pain in Neck/Jaw/Shoulder/Back,Excessive Sweating,Chest Discomfort (Activity),Snoring/Sleep Apnea,Anxiety/Feeling of Doom
 27,32,Yes,Yes,Yes,Yes,Yes,Yes,Yes,No,Yes,Yes
 17,27,Yes,Yes,Yes,Yes,Yes,Yes,Yes,No,No,No
+temp_1747533644994,56,No,No,No,No,No,No,No,Yes,Yes,Yes
+temp_1747533647810,56,No,No,No,Yes,No,No,No,Yes,Yes,Yes
+temp_1747533649067,56,No,No,No,Yes,No,Yes,No,Yes,Yes,Yes
+temp_1747533650275,56,No,No,No,Yes,No,Yes,Yes,Yes,Yes,Yes
+temp_1747533650443,56,No,No,No,Yes,No,Yes,Yes,Yes,Yes,Yes

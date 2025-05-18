@@ -1,14 +1,15 @@
-CXX = g++
-CXXFLAGS = -Iinclude -std=c++17 -Wall
-SRC = $(wildcard src/*.cpp)
-OBJ = $(SRC:.cpp=.o)
-TARGET = StrokeRiskSystem
-CXXFLAGS = -std=gnu++14 -Iinclude -g
+.PHONY: all clean test run
 
-all: $(TARGET)
+all: compile
 
-$(TARGET): $(SRC)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRC)
+compile:
+	mvn compile
+
+test:
+	mvn test
+
+run:
+	mvn exec:java -Dexec.mainClass="src.Main"
 
 clean:
-	rm -f $(TARGET) src/*.o
+	mvn clean

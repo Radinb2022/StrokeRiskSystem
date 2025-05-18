@@ -1,5 +1,95 @@
 # Stroke Risk Prediction System
 
+A Java-based system for predicting stroke risk using Random Forest algorithm and machine learning techniques.
+
+## Prerequisites
+
+- Java 11 or higher
+
+## Installation
+
+1. Install Java 11 or higher from: https://adoptium.net/
+2. Clone the repository:
+   ```bash
+   git clone https://github.com/Radinb2022/StrokeRiskSystem
+   cd StrokeRiskSystem
+   ```
+
+## Running the Application
+
+### Windows (Easiest Method)
+1. Double-click `run.bat` in Windows Explorer
+   OR
+2. Open PowerShell in the project directory and run:
+   ```powershell
+   .\run.bat
+   ```
+
+### Windows (Manual Method)
+```powershell
+# Compile the project
+javac -d . src/*.java
+
+# Run the application
+java src.Main
+```
+
+### Linux/Mac
+```bash
+# Compile the project
+javac -d . src/*.java
+
+# Run the application
+java src.Main
+```
+
+## Features
+
+- Stroke risk prediction using Random Forest algorithm
+- GUI interface for easy data input and visualization
+- Database management for patient records
+- Real-time risk assessment
+- Comparison with similar patient profiles
+
+## Project Structure
+
+```
+StrokeRiskSystem/
+├── src/
+│   ├── Main.java                 # Application entry point
+│   ├── StrokeRiskGUI.java        # GUI implementation
+│   ├── StrokeRiskPredictor.java  # Risk prediction logic
+│   ├── RandomForest.java         # Random Forest implementation
+│   ├── TreeNode.java            # Tree node structure
+│   ├── UserProfile.java         # Patient data model
+│   ├── KaggleData.java          # Data loading and management
+│   └── Comparison.java          # Profile comparison logic
+├── data/
+│   └── data.csv                 # Sample dataset
+├── run.bat                      # Windows batch file for easy running
+└── README.md                    # This file
+```
+
+## Testing
+
+The project includes comprehensive test cases:
+- Unit tests for risk calculation
+- System tests for prediction functionality
+- Performance tests
+- Accuracy tests
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
 ## Overview
 This is a C++ commercial-quality software system for predicting stroke risk using a custom random forest classifier. It allows users to input patient data, receive a risk prediction, add new data, retrain the model, and compare profiles. The system is menu-driven and runs in the terminal.
 
